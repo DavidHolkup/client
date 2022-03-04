@@ -1,0 +1,9 @@
+<div *ngIf="showLoading">Loading...</div>
+
+<div *ngIf="showConnect">
+  <app-connect [info]="connectionInfo!"></app-connect>
+</div>
+
+<div *ngIf="showDisConnect">
+  <app-disconnect [receiver]="receiverPubKey!"></app-disconnect>
+</div>

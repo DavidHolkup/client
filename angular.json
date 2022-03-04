@@ -33,7 +33,17 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "@solana/buffer-layout",
+              "borsh",
+              "bs58",
+              "buffer",
+              "jayson/lib/client/browser",
+              "rpc-websockets",
+              "secp256k1",
+              "tweetnacl"
+            ]
           },
           "configurations": {
             "production": {

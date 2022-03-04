@@ -18,6 +18,13 @@
     "@angular/platform-browser": "~13.2.0",
     "@angular/platform-browser-dynamic": "~13.2.0",
     "@angular/router": "~13.2.0",
+    "@project-serum/anchor": "^0.22.1",
+    "@project-serum/sol-wallet-adapter": "^0.2.6",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/wallet-adapter-wallets": "^0.15.5",
+    "@solana/web3.js": "^1.36.0",
+    "@streamflow/stream": "^2.1.1",
+    "angular-sol-wallets": "^0.0.19",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"

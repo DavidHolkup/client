@@ -1,27 +1,67 @@
-# Client
+# 1
+install
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.2.5.
+- @solana/spl-token
+- @solana/wallet-adapter-wallets
+- buffer-layout
+  add to polyfills.ts
+```
+(window as any)['global'] = window;
+(window as any)['process'] = {
+  env: {DEBUG: 'debugging', NODE_DEBUG: 'debugging'},
+};
+```
 
-## Development server
+# 2
+`Stream` from `@streamflow/stream/dist/types`
+should have `isActive` field or method.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Now I try to get this information by calling
+```
+stream.canceledAt == undefined
+```
+but I'm not sure it's correct.
 
-## Code scaffolding
+# 3
+It would be nice to describe what each function returns semantically.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+For example
+```
+// in Stream from @streamflow/stream
+static get({ connection, wallet, type, direction, cluster, }: GetStreamsParams): Promise<[string, StreamData][]>;
+```
+I assume it returns [`stream id`, `stream itself`] but I can only guess and I can't know for sure until I inspect the response.
+This assuming / guessing happens a lot while reading the docs.
+# 4
+When creating stream. I want to start paying immediately.
 
-## Build
+I'm not sure how to achieve this. There are two parameters that I think are related - `start` and `cliff`.
+I don't understand how these parameters differ and how should I use them together.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+To start _now_ I guess I have to use something like this
+```
+start: Date.now() / 1000,
+cliff: 0,
+```
+I can't imagine a usecase where it is desirable to open stream in the past.
+Therefore, I would suggest to make `start` parameter relative to _now_
+```
+start: 0,       // starts now
+start: 60,      // starts 60 seconds from now
+start: 3600,    // starts 1 hour from now
+```
 
-## Running unit tests
+# 5
+I have no idea what `topup` means
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+# 6
+I have not found anything regarding stable-coin usage in the docs.
 
-## Running end-to-end tests
+Is it the mint parameter which decides what token to use?
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+# 7
+I am confused by `withdraw from stream`.
+Do I have to call it to initiate a payment?
+I think not, I think `create stream` kicks this off and than it happens automatically.
+It probably also does not mean that I don't want to be part of the stream anymore.
+For this I would use `cancel stream`.

@@ -17,7 +17,11 @@ export class WalletConnectorComponent implements OnInit {
   async connect() {
     await StreamManagerService.connectWallet()
     console.log('Wallet connected')
+  }
+
+  async airdrop() {
     await StreamManagerService.airdrop()
+    console.log('SOL airdropped')
   }
 
   continue() {

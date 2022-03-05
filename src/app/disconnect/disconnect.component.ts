@@ -25,7 +25,7 @@ export class DisconnectComponent implements OnInit {
   }
 
   async findConnection() {
-    const stream = await StreamManagerService.getActiveStream(new PublicKey(this.receiver))
+    const stream = await StreamManagerService.getActiveStream(this.receiver)
     if (stream == undefined) {
       this.showError = true;
       return

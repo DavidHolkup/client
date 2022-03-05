@@ -6,11 +6,10 @@ import Stream, {
   Cluster,
   CreateStreamParams,
   GetStreamsParams,
-  StreamDirection
+  StreamDirection,
 } from "@streamflow/stream";
 import {Stream as StreamData} from "@streamflow/stream/dist/types";
 import { Wallet as WalletType} from "@project-serum/anchor/src/provider";
-import {web3} from "@project-serum/anchor";
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +28,7 @@ export class StreamManagerService {
   }
 
   private static totalAmount(info: Information): number {
-    return info.adults   * info.pricePerAdult   +
+    return info.adults * info.pricePerAdult   +
       info.students * info.pricePerStudent +
       info.children * info.pricePerChild;
   }
@@ -39,29 +38,32 @@ export class StreamManagerService {
   }
 
   static async create(info: Information) {
+    const amountPerMinute = StreamManagerService.totalAmount(info)
     const params: CreateStreamParams = {
       sender: this.connectedWallet!,
       recipient: info.receiver,
       period: StreamManagerService.getPeriod(info),
-      amountPerPeriod: new BN(StreamManagerService.totalAmount(info)),
+      amountPerPeriod: new BN(amountPerMinute),
+      start: Date.now() / 1000,
+      name: info.receiverName + Date.now(),
+      depositedAmount: new BN(amountPerMinute * 120),
       cancelableBySender: true,
       cancelableByRecipient: false,
       canTopup: false,
       cliff: 0,
       cliffAmount: new BN(0),
       connection: await connect(),
-      depositedAmount: new BN(0),
-      mint: "",
-      name: "",
-      start: 0,
+      mint: "DNw99999M7e24g99999999WJirKeZ5fQc6KY999999gK",
       transferableByRecipient: false,
       transferableBySender: false,
     };
+    console.log(new PublicKey(info.receiver))
+    console.log('creating channel with these parameters', params)
     const {tx, id} = await Stream.create(params);
+    console.log("Stream created with id", id)
   }
 
-  // the string in response is probably id TODO NOTE
-  static async getActiveStream(receiver: PublicKey): Promise<{id: string, data: StreamData} | undefined> {
+  static async getActiveStream(receiver: string): Promise<{id: string, data: StreamData} | undefined> {
     const params: GetStreamsParams = {
       wallet: this.connectedWallet!.publicKey,
       direction: StreamDirection.Outgoing,
@@ -70,7 +72,8 @@ export class StreamManagerService {
     }
     const streams: [string, StreamData][] = await Stream.get(params)
     const stream = streams.find(it => {
-      receiver.equals(new PublicKey(it[1].recipient))
+      const str: StreamData = it[1]
+      return receiver === str.recipient && str.canceledAt == undefined;
     })
     if (stream == undefined) {
       return undefined
@@ -91,6 +94,7 @@ export class StreamManagerService {
     }
     try {
       const { tx } = await Stream.cancel(params);
+      console.log("Stream closed")
     } catch (exception) {
       console.log(exception);
     }
@@ -109,15 +113,8 @@ export interface Information {
   receiverName: string;
 }
 
-function getUrl(devnet: boolean = true) {
-  return devnet
-    ? 'https://api.devnet.solana.com'
-    : 'https://api.mainnet-beta.solana.com';
-}
-
-export default async function connect(): Promise<Connection> {
-  const url = getUrl()
-  return new Connection(url, 'confirmed')
+export default function connect(): Connection {
+  return new Connection(clusterApiUrl('devnet'), 'confirmed')
 }
 
 export class ConnectedWallet implements WalletType {
@@ -143,7 +140,7 @@ export class ConnectedWallet implements WalletType {
   }
 
   async airdrop() {
-    let connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+    let connection = await connect();
     let airdropSignature = await connection.requestAirdrop(
       this.publicKey,
       LAMPORTS_PER_SOL,

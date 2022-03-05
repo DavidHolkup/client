@@ -28,7 +28,7 @@ export class StreamManagerService {
   constructor() {}
 
   static async connectWallet() {
-    return (this.connectedWallet = new ConnectedWallet());
+    return (this.connectedWallet = new ConnectedWallet(undefined));
   }
 
   static async airdrop() {
@@ -50,17 +50,17 @@ export class StreamManagerService {
   static async create(info: Information) {
     const amountPerMinute = StreamManagerService.totalAmount(info);
     const params: CreateStreamParams = {
-      sender: this.connectedWallet!,
+      sender: this.getWalletFromStorage(),
       recipient: info.receiver,
       period: StreamManagerService.getPeriod(info),
-      amountPerPeriod: getBN(amountPerMinute, 9),
-      start: Math.round(Date.now() / 1000),
+      amountPerPeriod: getBN(200, 9),
+      start: Math.round(Date.now() / 1000) + 10,
       name: info.receiverName + Date.now(),
-      depositedAmount: getBN(amountPerMinute * 120, 9),
+      depositedAmount: getBN(1000, 9),
       cancelableBySender: true,
       cancelableByRecipient: false,
       canTopup: false,
-      cliff: 0,
+      cliff: Math.round(Date.now() / 1000) + 10,
       cliffAmount: getBN(0, 9),
       connection: await connect(),
       mint: 'Gssm3vfi8s65R31SBdmQRq6cKeYojGgup7whkw4VCiQj',
@@ -111,6 +111,12 @@ export class StreamManagerService {
       console.log(exception);
     }
   }
+
+  static getWalletFromStorage() {
+    const keypair = localStorage.getItem('wallet')
+    this.connectedWallet = new ConnectedWallet(JSON.parse(keypair!))
+    return this.connectedWallet
+  }
 }
 
 export interface Information {
@@ -133,9 +139,17 @@ export class ConnectedWallet implements WalletType {
   publicKey: PublicKey;
   private readonly keyPair: Keypair;
 
-  constructor() {
-    this.keyPair = Keypair.generate();
-    this.publicKey = this.keyPair.publicKey!;
+  constructor(keypair: Keypair | undefined) {
+    if (keypair == undefined) {
+      this.keyPair = Keypair.generate();
+      localStorage.setItem('wallet', JSON.stringify(this.keyPair))
+      this.publicKey = this.keyPair.publicKey!;
+      console.log(this.publicKey.toBase58())
+    } else {
+      console.log(keypair)
+      this.keyPair = keypair
+      this.publicKey = this.keyPair.publicKey!;
+    }
   }
 
   async signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {

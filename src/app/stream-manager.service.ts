@@ -49,20 +49,21 @@ export class StreamManagerService {
 
   static async create(info: Information) {
     const amountPerMinute = StreamManagerService.totalAmount(info);
+    const now = Math.round(Date.now() / 1000) + 10;
     const params: CreateStreamParams = {
       sender: this.getWalletFromStorage(),
       recipient: info.receiver,
-      period: StreamManagerService.getPeriod(info),
-      amountPerPeriod: getBN(200, 9),
-      start: Math.round(Date.now() / 1000) + 10,
-      name: info.receiverName + Date.now(),
-      depositedAmount: getBN(1000, 9),
+      period: 60,
+      amountPerPeriod: getBN(100, 9),
+      start: now,
+      name: info.receiverName + now,
+      depositedAmount: getBN(500, 9),
       cancelableBySender: true,
       cancelableByRecipient: false,
       canTopup: false,
-      cliff: Math.round(Date.now() / 1000) + 10,
+      cliff: now,
       cliffAmount: getBN(0, 9),
-      connection: await connect(),
+      connection: new Connection(clusterApiUrl('devnet'), 'confirmed'),
       mint: 'Gssm3vfi8s65R31SBdmQRq6cKeYojGgup7whkw4VCiQj',
       transferableByRecipient: false,
       transferableBySender: false,
@@ -139,16 +140,20 @@ export class ConnectedWallet implements WalletType {
   publicKey: PublicKey;
   private readonly keyPair: Keypair;
 
-  constructor(keypair: Keypair | undefined) {
+  constructor(keypair: any) {
     if (keypair == undefined) {
       this.keyPair = Keypair.generate();
       localStorage.setItem('wallet', JSON.stringify(this.keyPair))
       this.publicKey = this.keyPair.publicKey!;
       console.log(this.publicKey.toBase58())
     } else {
-      console.log(keypair)
-      this.keyPair = keypair
+      const key = new Uint8Array(64)
+      for (let i = 0; i < 64; i++) {
+        key[i] = keypair['_keypair']['secretKey'][`${i}`]
+      }
+      this.keyPair = Keypair.fromSecretKey(key)
       this.publicKey = this.keyPair.publicKey!;
+      console.log(this.publicKey.toBase58())
     }
   }
 

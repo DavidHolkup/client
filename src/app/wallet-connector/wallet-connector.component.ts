@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {StreamManagerService} from "../stream-manager.service";
 import {Router} from "@angular/router";
+import {PhantomWalletAdapter} from "@solana/wallet-adapter-wallets";
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 
 @Component({
   selector: 'app-wallet-connector',

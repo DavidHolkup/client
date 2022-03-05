@@ -1,4 +1,4 @@
-#1
+# 1
 install
 
 - @solana/spl-token
@@ -12,7 +12,7 @@ install
 };
 ```
 
-#2
+# 2
 `Stream` from `@streamflow/stream/dist/types`
 should have `isActive` field or method.
 
@@ -22,7 +22,7 @@ stream.canceledAt == undefined
 ```
 but I'm not sure it's correct.
 
-#3
+# 3
 It would be nice to describe what each function returns semantically.
 
 For example
@@ -32,7 +32,7 @@ static get({ connection, wallet, type, direction, cluster, }: GetStreamsParams):
 ```
 I assume it returns [`stream id`, `stream itself`] but I can only guess and I can't know for sure until I inspect the response.
 This assuming / guessing happens a lot while reading the docs.
-#4
+# 4
 When creating stream. I want to start paying immediately.
 
 I'm not sure how to achieve this. There are two parameters that I think are related - `start` and `cliff`.
@@ -51,15 +51,15 @@ start: 60,      // starts 60 seconds from now
 start: 3600,    // starts 1 hour from now
 ```
 
-#5
+# 5
 I have no idea what `topup` means
 
-#6
+# 6
 I have not found anything regarding stable-coin usage in the docs.
 
 Is it the mint parameter which decides what token to use?
 
-#7
+# 7
 I am confused by `withdraw from stream`.
 Do I have to call it to initiate a payment?
 I think not, I think `create stream` kicks this off and than it happens automatically.

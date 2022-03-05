@@ -8,17 +8,7 @@ import {Information, StreamManagerService} from "../stream-manager.service";
 })
 export class ConnectComponent implements OnInit {
 
-  @Input() info: Information = {
-      adults: 2,
-      students: 2,
-      children: 1,
-      pricePerAdult: 0.05,
-      pricePerStudent: 0.04,
-      pricePerChild: 0.02,
-      priceUnit: 'MINUTE',
-      receiver: 'TODO WALLET ADDRESS',
-      receiverName: 'Solana Swimming Pool'
-    };
+  @Input() info!: Information;
 
   constructor(){}
 

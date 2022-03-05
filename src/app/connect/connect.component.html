@@ -1,4 +1,8 @@
 <h1>Do you want to open payment channel?</h1>
 <h2>Make sure the information below is correct!</h2>
-
+<span>Adults: {{info.adults}} ({{info.pricePerAdult}}/{{info.priceUnit}})</span><br/>
+<span>Adults: {{info.students}} ({{info.pricePerStudent}}/{{info.priceUnit}})</span><br/>
+<span>Adults: {{info.children}} ({{info.pricePerChild}}/{{info.priceUnit}})</span><br/>
+<span>To: {{info.receiverName}}</span><br/>
+<span>To: {{info.receiver}}</span><br/>
 <button (click)="openPaymentChannel()">Start Paying</button>

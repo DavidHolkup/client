@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Connection, PublicKey, Transaction} from "@solana/web3.js";
+import {clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction} from "@solana/web3.js";
 import Stream, {
   BN,
   CancelStreamParams,
@@ -9,29 +9,23 @@ import Stream, {
   StreamDirection
 } from "@streamflow/stream";
 import {Stream as StreamData} from "@streamflow/stream/dist/types";
-import Wallet from "@project-serum/sol-wallet-adapter";
 import { Wallet as WalletType} from "@project-serum/anchor/src/provider";
+import {web3} from "@project-serum/anchor";
 
 @Injectable({
   providedIn: 'root'
 })
 export class StreamManagerService {
   private static cluster = Cluster.Devnet
-  private static providerUrl = 'https://phantom.app/';
-  private static wallet = new Wallet(StreamManagerService.providerUrl, getUrl())
   private static connectedWallet: ConnectedWallet | undefined
   constructor() {}
 
-  static connectWallet() {
-    this.wallet.on('connect', publicKey => {
-      console.log('Connected to ' + publicKey.toBase58())
-      this.connectedWallet = new ConnectedWallet(this.wallet)
-    });
-    this.wallet.on('disconnect', () => {
-      console.log('Disconnected')
-      this.connectedWallet = undefined;
-    });
-    this.wallet.connect();
+  static async connectWallet() {
+    return this.connectedWallet = new ConnectedWallet()
+  }
+
+  static async airdrop() {
+    return this.connectedWallet?.airdrop()
   }
 
   private static totalAmount(info: Information): number {
@@ -63,11 +57,7 @@ export class StreamManagerService {
       transferableByRecipient: false,
       transferableBySender: false,
     };
-    try {
-      const {tx, id} = await Stream.create(params);
-    } catch (exception) {
-      console.log(exception);
-    }
+    const {tx, id} = await Stream.create(params);
   }
 
   // the string in response is probably id TODO NOTE
@@ -133,20 +123,32 @@ export default async function connect(): Promise<Connection> {
 export class ConnectedWallet implements WalletType {
 
   publicKey: PublicKey;
+  private readonly keyPair: Keypair;
 
-  constructor(private wallet: Wallet) {
-    if (!wallet.connected) {
-      throw Error('Wallet is not connected!!!')
+  constructor() {
+    this.keyPair = Keypair.generate()
+    this.publicKey = this.keyPair.publicKey!
+  }
+
+  async signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
+    for (const it of txs) {
+      await this.signTransaction(it)
     }
-    this.publicKey = wallet.publicKey!
+    return txs
   }
 
-  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
-    return this.wallet.signAllTransactions(txs);
+  async signTransaction(tx: Transaction): Promise<Transaction> {
+    await tx.sign(this.keyPair)
+    return tx
   }
 
-  signTransaction(tx: Transaction): Promise<Transaction> {
-    return this.wallet.signTransaction(tx);
-  }
+  async airdrop() {
+    let connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+    let airdropSignature = await connection.requestAirdrop(
+      this.publicKey,
+      LAMPORTS_PER_SOL,
+    );
 
+    await connection.confirmTransaction(airdropSignature);
+  }
 }

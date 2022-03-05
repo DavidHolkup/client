@@ -6,13 +6,17 @@ import { AppComponent } from './app.component';
 import { ConnectComponent } from './connect/connect.component';
 import { DisconnectComponent } from './disconnect/disconnect.component';
 import { PageResolverComponent } from './page-resolver/page-resolver.component';
+import { WalletConnectorComponent } from './wallet-connector/wallet-connector.component';
+import { ScannerComponent } from './scanner/scanner.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     ConnectComponent,
     DisconnectComponent,
-    PageResolverComponent
+    PageResolverComponent,
+    WalletConnectorComponent,
+    ScannerComponent
   ],
   imports: [
     BrowserModule,

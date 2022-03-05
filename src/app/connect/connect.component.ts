@@ -1,8 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Information, StreamManagerService} from "../stream-manager.service";
-import {HttpClient} from "@angular/common/http";
-import {SolWalletsService} from "angular-sol-wallets";
-import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 
 @Component({
   selector: 'app-connect',
@@ -23,7 +20,7 @@ export class ConnectComponent implements OnInit {
       receiverName: 'Solana Swimming Pool'
     };
 
-  constructor(private streamManager: StreamManagerService){}
+  constructor(){}
 
   openPaymentChannel() {
     StreamManagerService.create(this.info);

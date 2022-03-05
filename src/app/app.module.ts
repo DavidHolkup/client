@@ -4,7 +4,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ConnectComponent } from './connect/connect.component';
-import {SolWalletsModule} from "angular-sol-wallets";
 import { DisconnectComponent } from './disconnect/disconnect.component';
 import { PageResolverComponent } from './page-resolver/page-resolver.component';
 
@@ -18,7 +17,6 @@ import { PageResolverComponent } from './page-resolver/page-resolver.component';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    SolWalletsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

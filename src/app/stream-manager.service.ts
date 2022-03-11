@@ -1,14 +1,11 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {
   clusterApiUrl,
   Connection,
-  Keypair,
-  LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
 } from '@solana/web3.js';
 import Stream, {
-  BN,
   CancelStreamParams,
   Cluster,
   CreateStreamParams,
@@ -16,24 +13,40 @@ import Stream, {
   GetStreamsParams,
   StreamDirection,
 } from '@streamflow/stream';
-import { Stream as StreamData } from '@streamflow/stream/dist/types';
-import { Wallet as WalletType } from '@project-serum/anchor/src/provider';
+import {Stream as StreamData} from '@streamflow/stream/dist/types';
+import {Wallet as WalletType} from '@project-serum/anchor/src/provider';
+import {AccountLayout, TOKEN_PROGRAM_ID} from "@solana/spl-token";
 
 @Injectable({
   providedIn: 'root',
 })
 export class StreamManagerService {
   private static cluster = Cluster.Devnet;
-  private static connectedWallet: ConnectedWallet | undefined;
-  constructor() {}
+  private static wallet: PhantomWallet;
+
+  constructor() {
+  }
 
   static async connectWallet() {
-    return (this.connectedWallet = new ConnectedWallet(undefined));
+    if (StreamManagerService.phantomIsInstalled()) {
+      console.log("Phantom is installed")
+      try {
+        const resp = await window['solana'].connect();
+        console.log(resp)
+        this.wallet = new PhantomWallet(resp.publicKey)
+      } catch (err) {
+        console.log(err)
+      }
+    } else {
+      console.log("Phantom is not installed, redirecting")
+      window.open("https://phantom.app/", "_blank");
+    }
   }
 
-  static async airdrop() {
-    return this.connectedWallet?.airdrop();
+  private static phantomIsInstalled() {
+    return window['solana'] && window['solana'].isPhantom
   }
+
 
   private static totalAmount(info: Information): number {
     return (
@@ -51,13 +64,13 @@ export class StreamManagerService {
     const amountPerMinute = StreamManagerService.totalAmount(info);
     const now = Math.round(Date.now() / 1000) + 10;
     const params: CreateStreamParams = {
-      sender: this.getWalletFromStorage(),
+      sender: this.wallet,
       recipient: info.receiver,
       period: 60,
-      amountPerPeriod: getBN(100, 9),
+      amountPerPeriod: getBN(1, 9),
       start: now,
       name: info.receiverName + now,
-      depositedAmount: getBN(500, 9),
+      depositedAmount: getBN(10, 9),
       cancelableBySender: true,
       cancelableByRecipient: false,
       canTopup: false,
@@ -70,7 +83,7 @@ export class StreamManagerService {
     };
     console.log(new PublicKey(info.receiver));
     console.log('creating channel with these parameters', params);
-    const { tx, id } = await Stream.create(params);
+    const {tx, id} = await Stream.create(params);
     console.log('Stream created with id', id);
   }
 
@@ -78,15 +91,17 @@ export class StreamManagerService {
     receiver: string
   ): Promise<{ id: string; data: StreamData } | undefined> {
     const params: GetStreamsParams = {
-      wallet: this.connectedWallet!.publicKey,
+      wallet: this.wallet!.publicKey,
       direction: StreamDirection.Outgoing,
       cluster: this.cluster,
       connection: await connect(),
     };
     const streams: [string, StreamData][] = await Stream.get(params);
+    console.log(streams)
     const stream = streams.find((it) => {
       const str: StreamData = it[1];
-      return receiver === str.recipient && str.canceledAt == undefined;
+      console.log(receiver === str.recipient, str.canceledAt == 0, str.end < Date.now())
+      return receiver === str.recipient && str.canceledAt == 0 && str.end < Date.now();
     });
     if (stream == undefined) {
       return undefined;
@@ -101,23 +116,15 @@ export class StreamManagerService {
   static async cancelStream(id: string) {
     const params: CancelStreamParams = {
       connection: await connect(),
-      invoker: this.connectedWallet!,
+      invoker: this.wallet!,
       id: id,
       cluster: this.cluster,
     };
-    try {
-      const { tx } = await Stream.cancel(params);
+      console.log("canceling stream with params", params)
+      const {tx} = await Stream.cancel(params);
       console.log('Stream closed');
-    } catch (exception) {
-      console.log(exception);
-    }
   }
 
-  static getWalletFromStorage() {
-    const keypair = localStorage.getItem('wallet')
-    this.connectedWallet = new ConnectedWallet(JSON.parse(keypair!))
-    return this.connectedWallet
-  }
 }
 
 export interface Information {
@@ -136,46 +143,35 @@ export default function connect(): Connection {
   return new Connection(clusterApiUrl('devnet'), 'confirmed');
 }
 
-export class ConnectedWallet implements WalletType {
-  publicKey: PublicKey;
-  private readonly keyPair: Keypair;
+export class PhantomWallet implements WalletType {
 
-  constructor(keypair: any) {
-    if (keypair == undefined) {
-      this.keyPair = Keypair.generate();
-      localStorage.setItem('wallet', JSON.stringify(this.keyPair))
-      this.publicKey = this.keyPair.publicKey!;
-      console.log(this.publicKey.toBase58())
-    } else {
-      const key = new Uint8Array(64)
-      for (let i = 0; i < 64; i++) {
-        key[i] = keypair['_keypair']['secretKey'][`${i}`]
-      }
-      this.keyPair = Keypair.fromSecretKey(key)
-      this.publicKey = this.keyPair.publicKey!;
-      console.log(this.publicKey.toBase58())
-    }
+  constructor(public publicKey: PublicKey) {
+    this.printTokens()
   }
 
-  async signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
-    for (const it of txs) {
-      await this.signTransaction(it);
-    }
-    return txs;
+  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
+    return window['solana'].signAllTransactions(txs);
   }
 
-  async signTransaction(tx: Transaction): Promise<Transaction> {
-    await tx.sign(this.keyPair);
-    return tx;
+  signTransaction(tx: Transaction): Promise<Transaction> {
+    return window['solana'].signTransaction(tx);
   }
 
-  async airdrop() {
-    let connection = await connect();
-    let airdropSignature = await connection.requestAirdrop(
-      this.publicKey,
-      LAMPORTS_PER_SOL
-    );
+  async printTokens() {
+      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
 
-    await connection.confirmTransaction(airdropSignature);
+      const tokenAccounts = await connection.getTokenAccountsByOwner(
+        this.publicKey,
+        {
+          programId: TOKEN_PROGRAM_ID,
+        }
+      );
+
+      console.log("Token                                         Balance");
+      console.log("------------------------------------------------------------");
+      tokenAccounts.value.forEach((e) => {
+        const accountInfo = AccountLayout.decode(e.account.data);
+        console.log(`${new PublicKey(accountInfo.mint)}   ${accountInfo.amount}`);
+      })
   }
 }

@@ -11,8 +11,8 @@ import {Stream as StreamData} from "@streamflow/stream/dist/types";
 export class DisconnectComponent implements OnInit {
 
   @Input() receiver!: string
-  private streamInformation: any;
-  private streamId: string | undefined;
+  streamInformation: any;
+  streamId: string | undefined;
   private showError: boolean = false;
   private showLoading: boolean = true;
 
@@ -28,6 +28,7 @@ export class DisconnectComponent implements OnInit {
     const stream = await StreamManagerService.getActiveStream(this.receiver)
     if (stream == undefined) {
       this.showError = true;
+      console.log("no stream to cancel")
       return
     }
     this.streamId = stream.id;

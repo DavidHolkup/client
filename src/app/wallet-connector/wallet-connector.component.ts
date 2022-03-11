@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {StreamManagerService} from "../stream-manager.service";
 import {Router} from "@angular/router";
-import {PhantomWalletAdapter} from "@solana/wallet-adapter-wallets";
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 
 @Component({
   selector: 'app-wallet-connector',
@@ -16,14 +14,8 @@ export class WalletConnectorComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  async connect() {
-    await StreamManagerService.connectWallet()
-    console.log('Wallet connected')
-  }
-
-  async airdrop() {
-    await StreamManagerService.airdrop()
-    console.log('SOL airdropped')
+  connect() {
+    StreamManagerService.connectWallet()
   }
 
   continue() {

@@ -20,7 +20,7 @@
     "@angular/router": "~13.2.0",
     "@project-serum/anchor": "^0.22.1",
     "@project-serum/sol-wallet-adapter": "^0.2.6",
-    "@solana/spl-token": "^0.2.0",
+    "@solana/spl-token": "^0.1.6",
     "@solana/wallet-adapter-wallets": "^0.15.5",
     "@solana/web3.js": "^1.36.0",
     "@streamflow/stream": "^2.2.1",
